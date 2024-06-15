@@ -11,7 +11,7 @@ const handleSubmitForm = async (event) => {
       method: "POST",
       body,
     });
-    const data = res.json();
+    const data = await res.json();
     if (data === "200") window.location.pathname = "/";
   } catch (e) {
     console.error(e);

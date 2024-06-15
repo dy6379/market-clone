@@ -1,8 +1,9 @@
 from fastapi import FastAPI, UploadFile, Form, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.staticfiles import StaticFiles
 from typing import Annotated
+from pathlib import Path
 import sqlite3
 
 con = sqlite3.connect('db.db', check_same_thread=False)
@@ -55,6 +56,22 @@ async def get_image(item_id):
     image_bytes = cur.execute(f"""
                               SELECT image FROM items WHERE id={item_id}
                               """).fetchone()[0]
-    return Response(content=bytes.fromhex(image_bytes))
+    return Response(content=bytes.fromhex(image_bytes), media_type='image/*')
+
+@app.get("/signup", response_class=HTMLResponse)
+async def get_signup():
+    signup_path = Path("frontend/signup.html")
+    return HTMLResponse(signup_path.read_text(encoding="utf-8"))
+
+@app.post('/signup')
+def signup(id:Annotated[str,Form()], password:Annotated[str,Form()],
+           name:Annotated[str,Form()],
+           email:Annotated[str,Form()]):
+    cur.execute(f"""
+                INSERT INTO users(id,name,email,password)
+                VALUES ('{id}','{name}','{email}','{password}')
+                """)
+    con.commit()
+    return '200'
 
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
